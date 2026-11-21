@@ -270,6 +270,11 @@ h2{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;
 .sh-add .ig{margin:8px 0 10px;box-shadow:none;border:1px solid var(--line)}
 .pk-peak{font-size:11.5px;color:var(--dim);line-height:1.3;margin-top:2px}
 .stats.three{grid-template-columns:repeat(3,1fr)}
+.pass-list{margin:12px 0 4px;box-shadow:none;border:1px solid var(--line)}
+.perks{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;padding:10px 2px 12px;border-bottom:1px solid var(--line)}
+.perks div{display:flex;gap:8px;align-items:flex-start;font-size:12.5px;line-height:1.35;color:var(--dim)}
+.perks svg{width:16px;height:16px;color:var(--ok);margin-top:1px}
+.sh-row.upsell .v{color:var(--ok);font-weight:600}
 .photo{padding:12px}
 .photo img{width:100%;aspect-ratio:16/10;object-fit:cover;border-radius:10px;display:block}
 .ph-pick{display:flex;flex-direction:column;align-items:center;gap:4px;padding:26px 12px;border:1.5px dashed var(--line);border-radius:10px;cursor:pointer;color:var(--accent);text-align:center}
@@ -414,7 +419,10 @@ const EXAM=new Set([5,6]); // example: the last two days in the strip fall in ex
 const isPeak=(d,t)=>EXAM.has(d)||(mins(t)>=720&&mins(t)<840); // lunch 12:00-2:00 pm, or exam week
 const priceAt=(k,d,t)=>isPeak(d,t)?PKG[k].peak:PKG[k].price;
 const ADDONS=[['mask','Eye mask and earplugs to keep',1.5,'eye-off','Waiting in your pod'],['coffee','Coffee ready when you wake',1.8,'coffee','Collect at the counter']];
-const PASS={n:8,price:20};
+const PASSES=[{id:'p5',kind:'nap',n:5,price:11,name:'Nap Pass 5'},{id:'p10',kind:'nap',n:10,price:19,name:'Nap Pass 10',best:1},
+              {id:'s8',kind:'snack',n:8,price:30,name:'Snack Pass 8'}];
+const per=p=>p.price/p.n, LOW=Math.min(...PASSES.filter(p=>p.kind==='nap').map(per));
+const PASS_PERKS=[['badge-dollar-sign','The same low price at lunch and in exam weeks'],['calendar-clock','Book exam-week slots 2 days before everyone else'],['gift','Give a nap to a friend from your pass'],['infinity','Valid for 60 days']];
 const METHODS=[['paynow','PayNow','qr-code'],['card','Visa •••• 4242','credit-card'],['student','Student card','id-card']];
 const PER=[['m','Morning',0,12],['a','Afternoon',12,17],['e','Evening',17,24]];
 const TIMES=[]; for(let h=8;h<22;h++) for(const m of [0,30]) TIMES.push(String(h).padStart(2,'0')+':'+(m?'30':'00'));
@@ -433,7 +441,7 @@ const dayLong=d=>(d===0?'Today, ':d===1?'Tomorrow, ':'')+DAYS[d].toLocaleDateStr
 
 const S={tab:'book',stacks:{book:['home'],bookings:['list'],account:['me'],feedback:['root']},
   pkg:null,day:0,per:'a',sel:null,showFull:false,pay:'paynow',booking:null,history:[],fast:true,fb:{},fbText:'',fbWho:'',fbDone:false,
-  user:null,vSel:null,newV:false,justStamp:-1,addons:[],usePass:true,sheetMode:'book'};
+  user:null,vSel:null,newV:false,justStamp:-1,addons:[],usePass:true,sheetMode:'book',passPick:'p10',passReturn:false};
 
 /* ---------- account + rewards (demo: one example member, saved on this device) ---------- */
 const acct={get(){try{return JSON.parse(localStorage.getItem('ss-account')||'null')}catch(e){return null}},
@@ -444,12 +452,13 @@ const VCH={welcome:{title:'$1 off your first nap',sub:'Welcome gift',off:()=>1},
            free:{title:'Free Snooze',sub:'From your stamp card',off:(k,d,t)=>priceAt('snooze',d,t)},
            upgrade:{title:'Free snack upgrade',sub:'Thanks for rating a nap',off:(k,d,t)=>k==='snack'?r2(priceAt('snack',d,t)-priceAt('snooze',d,t)):0}};
 const PERKS=[['gift','$1 off your first nap','Added as soon as you sign in'],['stamp','Free Snooze after 5 naps','One stamp for every nap'],
-             ['ticket','Nap Pass',`${PASS.n} naps for ${'$'+PASS.price}, even at lunch`],['cookie','Free snack upgrade','When you rate a nap']];
+             ['ticket','Nap Pass',`Naps from ${'$'+LOW.toFixed(2)}, even at lunch`],['cookie','Free snack upgrade','When you rate a nap']];
 const r2=n=>Math.round(n*100)/100;
 const saveUser=()=>acct.set(S.user);
 function grant(kind){ S.user.vouchers.push({id:kind+'-'+Date.now().toString(36),kind}); S.newV=true; }
 function signIn(){ S.user={name:'Alex Tan',email:'alex.tan@student.demo',stamps:0,vouchers:[],fbReward:false,pass:0}; grant('welcome'); saveUser(); }
 const hasPass=()=>!!(S.user&&S.user.pass>0);
+const passCover=(d,t)=>S.user.passKind==='snack'&&S.pkg==='snack'?priceAt('snack',d,t):priceAt('snooze',d,t);
 function addStamp(){
   S.user.stamps++; let msg;
   if(S.user.stamps>=STAMPS){ S.user.stamps=0; S.justStamp=-1; grant('free'); msg='Stamp card full. Your next Snooze is free.'; }
@@ -463,7 +472,7 @@ function chosenV(){ if(!S.user||S.vSel==='none'||(hasPass()&&S.usePass)) return 
 function quote(){ const {d,t}=S.sel, peak=isPeak(d,t), lines=[];
   const items=[[`${PKG[S.pkg].name}, ${peak?'peak':'off-peak'}`,priceAt(S.pkg,d,t)]].concat(S.addons.map(k=>{const a=ADDONS.find(x=>x[0]===k); return [a[1],a[2]];}));
   const full=r2(items.reduce((s,x)=>s+x[1],0)); let tot=full, usedPass=false;
-  if(hasPass()&&S.usePass){ const o=priceAt('snooze',d,t); lines.push([`Nap Pass (${S.user.pass} left)`,o]); tot=r2(tot-o); usedPass=true; }
+  if(hasPass()&&S.usePass){ const o=Math.min(tot,passCover(d,t)); lines.push([`${S.user.passName||'Nap Pass'} (${S.user.pass} left)`,o]); tot=r2(tot-o); usedPass=true; }
   const v=chosenV(); if(v){ const o=Math.min(tot,offOf(v)); if(o>0){ lines.push([VCH[v.kind].title,o]); tot=r2(tot-o); } }
   return {items,lines,total:tot,v,usedPass,peak,saved:r2(full-tot)}; }
 const CLEAN=5; // minutes to wipe down and UV-clean a pod
@@ -492,7 +501,7 @@ SC.home={root:1,
    <button class="pk" role="radio" aria-checked="${S.pkg===k}" data-act="pkg" data-v="${k}"><span class="pk-badge">${ic('check')}</span>
     <span class="tile">${ic(p.icon)}</span><span class="pk-name">${esc(p.name)}</span><span class="pk-sub">${p.sub}</span>
     <span class="pk-price">$${Math.floor(p.price)}<small>.${p.price.toFixed(2).split('.')[1]}</small></span><span class="pk-peak">${money(p.peak)} at lunch and in exam weeks</span></button>`).join('')}</div>
-  ${S.user&&!hasPass()?`<div class="ig" style="margin-top:10px">${row({tap:1,icon:'ticket',title:`Nap Pass: ${PASS.n} naps for ${money(PASS.price)}`,sub:`${money(PASS.price/PASS.n)} a nap, even at lunch`,chev:1,attrs:'data-act="buyPass"'})}</div>`:''}
+  ${S.user&&!hasPass()?`<div class="ig" style="margin-top:10px">${row({tap:1,icon:'ticket',title:`Nap Pass: naps from ${money(LOW)}`,sub:'Cheaper than any single nap, even at lunch',end:`<span class="pill ok">Save up to ${Math.round((1-LOW/PKG.snooze.peak)*100)}%</span>`,attrs:'data-act="buyPass"'})}</div>`:''}
   <h2>In every pod</h2>
   <div class="ig feats">${[['snowflake','Aircon'],['bed-double','Mattress'],['lock','Private'],['alarm-clock','20-min alarm']].map(([i,l])=>`<div>${ic(i)}<span>${l}</span></div>`).join('')}</div>
   <p class="ig-footer">Each napper tidies up and photographs the pod, then it runs a UV clean. Pillow covers and sheets are washed and reused.</p>`,
@@ -551,7 +560,7 @@ function paintSlots(){
      <span class="mini" aria-hidden="true">${[0,1,2,3].map(j=>`<i class="${j<f?'on':''}"></i>`).join('')}</span>
      <span class="free-t ${f===0?'full':f===1?'low':''}">${f===0?'Full':f===1?'1 left':f+' free'}</span>${tick}</button>`}).join('')}</div>
   <p class="ig-footer">${EXAM.has(S.day)?`Exam week: every slot is ${money(PKG[S.pkg].peak)}. Book a day earlier to save.`
-    :`Off-peak saver: ${money(PKG[S.pkg].price)}. Lunch (12:00–2:00 pm) is ${money(PKG[S.pkg].peak)}.`}</p>`;
+    :`Off-peak saver: ${money(PKG[S.pkg].price)}. Lunch (12:00–2:00 pm) is ${money(PKG[S.pkg].peak)}.`}${hasPass()?'':` With a pass, any slot is from ${money(LOW)}.`}</p>`;
   icons();
 }
 function paintWhen(anim){
@@ -617,7 +626,7 @@ function samplePhoto(){ const c=document.createElement('canvas'); c.width=480; c
   x.fillStyle='rgba(125,168,214,.35)'; x.fillRect(30,30,420,40); return c.toDataURL('image/png'); }
 const collectList=()=>(S.booking.pkg==='snack'?['Granola bar and fruit juice']:[]).concat((S.booking.addons||[]).includes('coffee')?['Coffee']:[]);
 SC.collect={title:'Collect',notabs:1,noback:1,
- render:()=>scanView('Show this at the BizCampus counter',collectList().join(' and ')),
+ render:()=>scanView('Show this at the BizCampus counter',collectList().join(' and ')+', plus a free sample from today\'s sponsor'),
  mount(){ drawQR(); startScan('Claimed. Enjoy your snack.','Have a good class',finishNap); }
 };
 SC.me={root:1,
@@ -634,8 +643,9 @@ SC.me={root:1,
    <h2>Vouchers</h2>${u.vouchers.length
      ?`<div class="ig">${u.vouchers.map(v=>row({icon:'ticket-percent',tone:'ok',title:VCH[v.kind].title,sub:VCH[v.kind].sub,end:'<span class="pill">At checkout</span>'})).join('')}</div>`
      :`<div class="ig"><div class="empty" style="padding:24px 20px"><b>No vouchers right now</b><p>Fill your stamp card or rate a nap to earn one.</p></div></div>`}
-   <h2>Nap Pass</h2><div class="ig">${u.pass>0?row({icon:'ticket',title:`${u.pass} of ${PASS.n} naps left`,sub:'Used for you at checkout. Valid 30 days.',end:'<span class="pill ok">Active</span>'})
-     :row({tap:1,icon:'ticket',title:`${PASS.n} naps for ${money(PASS.price)}`,sub:`${money(PASS.price/PASS.n)} a nap, even at lunch and in exam weeks`,chev:1,attrs:'data-act="buyPass"'})}</div>
+   <h2>Nap Pass</h2><div class="ig">${u.pass>0?row({icon:'ticket',title:`${esc(u.passName||'Nap Pass')}: ${u.pass} left`,sub:'Used for you at checkout. Valid 60 days.',end:'<span class="pill ok">Active</span>'})
+       +row({tap:1,icon:'gift',tone:'ok',title:'Give a nap to a friend',sub:'Uses one nap from your pass',chev:1,attrs:'data-act="giftNap"'})
+     :row({tap:1,icon:'ticket',title:`Naps from ${money(LOW)}`,sub:'Even at lunch and in exam weeks',chev:1,attrs:'data-act="buyPass"'})}</div>
    <h2>Demo tools</h2><div class="ig">${row({tap:1,plain:1,title:'Add a stamp',attrs:'data-act="addStamp"',end:ic('plus')})}${row({tap:1,plain:1,title:'Sign out and reset',attrs:'data-act="signOut"',end:ic('log-out')})}</div>
    <p class="ig-footer">Example account for the demo. Saved on this device only.</p>`; },
  mount(){ S.justStamp=-1; S.newV=false; },
@@ -653,13 +663,16 @@ SC.root={root:1,
 SC.biz={title:'How it makes money',
  render:()=>`<h2>Where the money comes from</h2><div class="ig">
   ${row({icon:'bed',title:'Nap sales',sub:`Snooze ${money(PKG.snooze.price)} off-peak, ${money(PKG.snooze.peak)} peak. Snack & Snooze ${money(PKG.snack.price)} / ${money(PKG.snack.peak)}.`,val:'~$2,920'})}
-  ${row({icon:'ticket',title:'Nap Pass',sub:`${PASS.n} naps for ${money(PASS.price)}, paid up front. Brings regulars back and money in early.`,val:'In nap sales'})}
+  ${row({icon:'ticket',title:'Passes',sub:`From ${money(LOW)} a nap, paid up front. Brings regulars back more often, and about 1 in 7 pass naps is never used.`,val:'~$120 unused'})}
+  ${row({icon:'package-open',title:'Brand samples',sub:'Brands pay about $0.50 for each sample handed out when students collect their snack.',val:'~$230'})}
+  ${row({icon:'school',title:'Wellbeing passes',sub:'The school buys Nap Passes in bulk to give students in exam weeks.',val:'~$950 per exam month'})}
   ${row({icon:'coffee',title:'Add-ons',sub:`Eye mask ${money(1.5)}, coffee ready when you wake ${money(1.8)}. About 1 in 10 naps.`,val:'~$140'})}
   ${row({icon:'megaphone',title:'Ad space',sub:'Brands pay for the pod door panels and a card in the app.',val:'~$200'})}
   ${row({icon:'handshake',title:'Sponsored snack',sub:'A brand supplies the granola bar and juice free, for the exposure.',val:'Saves ~$410'})}
   ${row({icon:'recycle',title:'Reusable covers, students tidy up',sub:'Washed covers instead of disposables, and a 2-minute tidy-up instead of a cleaner.',val:'Saves ~$170'})}</div>
-  <h2>Example month</h2><div class="ig"><div class="stats three"><div><b>$3,260</b><span>Money in</span></div><div><b>$940</b><span>Costs</span></div><div><b>~$2,320</b><span>Profit</span></div></div></div>
-  <p class="ig-footer">Estimates: 4 pods, about 39 naps a day (35% of slots), 22 weekdays. Costs: pods over 3 years, power and repairs, laundry for reusable covers (about $0.15 each) and wipes. Counter staff already at BizCampus do the cleaning checks, so there's no extra wage. Check every number before it goes on a slide.</p>`
+  <h2>Example month, outside exams</h2><div class="ig"><div class="stats three"><div><b>$3,870</b><span>Money in</span></div><div><b>$990</b><span>Costs</span></div><div><b>~$2,880</b><span>Profit</span></div></div></div>
+  <p class="ig-footer">Estimates: 4 pods, about 47 naps a day (42% of slots; passes are assumed to bring 20% more visits, which testing should check), 22 weekdays. Pass naps sell for less, so the average nap brings in about $3.05.</p>
+  <p class="ig-footer"> Costs: pods over 3 years, power and repairs, laundry for reusable covers (about $0.15 each) and wipes. Counter staff already at BizCampus do the cleaning checks, so there's no extra wage. Check every number before it goes on a slide.</p>`
 };
 SC.form={title:'Rate your nap',notabs:1,
  render(){ const qs=[['easy','How easy was booking?'],['price','Is the price fair?'],['use','Would you use it in a break?'],['better','Better than a coffee for energy?'],['back','Would the stamp card and vouchers bring you back?']];
@@ -751,10 +764,11 @@ let sheetH=0, payState='idle';
 function voucherRow(){
   if(!S.user) return `<button class="sh-row" data-act="sheetSignIn"><span class="k">Rewards</span><span class="v"><span class="tile ok">${ic('gift')}</span>Sign in for $1 off</span><span class="chev">${ic('chevron-right')}</span></button>`;
   const passRow=hasPass()?`<div class="sh-row"><span class="k">Nap Pass</span><span class="v"><span class="tile">${ic('ticket')}</span>${S.user.pass} left</span><button class="switch" role="switch" data-act="usePass" aria-checked="${S.usePass}" aria-label="Use Nap Pass"></button></div>`:'';
+  const upsell=S.user&&!hasPass()?`<button class="sh-row upsell" data-act="upsellPass"><span class="k">Save</span><span class="v"><span class="tile ok">${ic('ticket')}</span><span>${S.pkg==='snack'?`${money(per(PASSES[2]))} with a Snack Pass`:`This nap is ${money(LOW)} with a Nap Pass`}</span></span><span class="chev">${ic('chevron-right')}</span></button>`:'';
   if(hasPass()&&S.usePass) return passRow+`<div class="sh-row"><span class="k">Voucher</span><span class="v" style="color:var(--dim)">Saved for later</span><span></span></div>`;
   const u=usable(), c=chosenV();
-  if(!u.length) return passRow+ `<div class="sh-row"><span class="k">Voucher</span><span class="v" style="color:var(--dim)">None for this nap</span><span></span></div>`;
-  return passRow+`<button class="sh-row" data-act="vouchers" aria-expanded="false"><span class="k">Voucher</span><span class="v"><span class="tile ok">${ic('ticket-percent')}</span>${c?esc(VCH[c.kind].title):'Not used'}</span><span class="chev">${ic('chevron-right')}</span></button>
+  if(!u.length) return upsell+passRow+ `<div class="sh-row"><span class="k">Voucher</span><span class="v" style="color:var(--dim)">None for this nap</span><span></span></div>`;
+  return upsell+passRow+`<button class="sh-row" data-act="vouchers" aria-expanded="false"><span class="k">Voucher</span><span class="v"><span class="tile ok">${ic('ticket-percent')}</span>${c?esc(VCH[c.kind].title):'Not used'}</span><span class="chev">${ic('chevron-right')}</span></button>
   <div class="methods" id="vlist"><div><div class="ig" role="radiogroup" aria-label="Voucher">${u.map(v=>row({tap:1,icon:'ticket-percent',tone:'ok',title:esc(VCH[v.kind].title),sub:VCH[v.kind].sub,end:tick,attrs:`role="radio" aria-checked="${!!c&&c.id===v.id}" data-act="voucher" data-v="${v.id}"`})).join('')}
    ${row({tap:1,icon:'x',tone:'mute',title:"Don't use a voucher",end:tick,attrs:`role="radio" aria-checked="${!c}" data-act="voucher" data-v="none"`})}</div></div></div>`;
 }
@@ -762,16 +776,18 @@ function refreshSheet(){ const sh=$('#sheet'); sh.innerHTML=sheetHTML(); icons()
 const payRows=()=>{ const m=METHODS.find(x=>x[0]===S.pay);
   return `<button class="sh-row" data-act="methods" aria-expanded="false" id="pmRow"><span class="k">Pay with</span><span class="v"><span class="tile mute">${ic(m[2])}</span>${m[1]}</span><span class="chev">${ic('chevron-right')}</span></button>
   <div class="methods" id="methods"><div><div class="ig" role="radiogroup" aria-label="Payment method">${METHODS.map(([v,l,i])=>row({tap:1,icon:i,tone:'mute',title:l,end:tick,attrs:`role="radio" aria-checked="${S.pay===v}" data-act="method" data-v="${v}"`})).join('')}</div></div></div>`; };
-function passHTML(){
+function passHTML(){ const p=PASSES.find(x=>x.id===S.passPick), single=p.kind==='snack'?PKG.snack:PKG.snooze;
   return `<div class="grab" id="grab"><span></span></div>
-  <div class="sh-head"><span class="tile">${ic('ticket')}</span><div><b>Nap Pass</b><span class="ig-sub">Snack &amp; Snooze · BizCampus</span></div>
+  <div class="sh-head"><span class="tile">${ic('ticket')}</span><div><b>Choose a pass</b><span class="ig-sub">Snack &amp; Snooze · BizCampus</span></div>
    <button class="x" data-act="closeSheet" aria-label="Close">${ic('x')}</button></div>
+  <div class="ig pass-list" role="radiogroup" aria-label="Pass">${PASSES.map(x=>row({tap:1,icon:x.kind==='snack'?'cookie':'ticket',title:`${esc(x.name)} · ${money(x.price)}`,
+    sub:`${money(per(x))} a ${x.kind==='snack'?'Snack & Snooze':'nap'}${x.best?' · best value':''}`,end:tick,attrs:`role="radio" aria-checked="${S.passPick===x.id}" data-act="passPick" data-v="${x.id}"`})).join('')}</div>
+  <div class="perks">${PASS_PERKS.map(([i,l])=>`<div>${ic(i)}<span>${l}</span></div>`).join('')}</div>
   ${payRows()}
-  <div class="sh-items"><div><span>${PASS.n} Snooze naps, valid 30 days</span><span>${money(PASS.price)}</span></div>
-   <div><span>Works at lunch and in exam weeks</span><span>Included</span></div>
-   <div class="disc"><span>vs ${PASS.n} peak naps at ${money(PKG.snooze.peak)}</span><span>Save ${money(PKG.snooze.peak*PASS.n-PASS.price)}</span></div></div>
-  <div class="sh-row total"><span class="k">Pay BizCampus</span><span class="v">${money(PASS.price)}</span></div>
-  <button class="pay-btn" id="payBtn" data-act="pay">Pay ${money(PASS.price)}</button>
+  <div class="sh-items"><div><span>${p.n} ${p.kind==='snack'?'Snack & Snooze visits':'Snooze naps'}</span><span>${money(p.price)}</span></div>
+   <div class="disc"><span>vs ${p.n} at lunch prices (${money(single.peak)} each)</span><span>Save ${money(single.peak*p.n-p.price)}</span></div></div>
+  <div class="sh-row total"><span class="k">Pay BizCampus</span><span class="v">${money(p.price)}</span></div>
+  <button class="pay-btn" id="payBtn" data-act="pay">Pay ${money(p.price)}</button>
   <p class="sh-note">Prototype. No money is taken.</p>`; }
 function sheetHTML(){ if(S.sheetMode==='pass') return passHTML();
   const p=PKG[S.pkg], q=quote();
@@ -815,7 +831,10 @@ function pay(){
   if(payState!=='idle') return; payState='busy'; const b=$('#payBtn'), mode=S.sheetMode, q=mode==='book'?quote():null;
   b.innerHTML='<span class="spin"></span>Processing';
   setTimeout(()=>{ payState='done'; b.classList.add('done'); b.innerHTML=ic('check')+'Done'; icons();
-    if(mode==='pass') return setTimeout(()=>closeSheet(0,()=>{ S.user.pass=PASS.n; saveUser(); render('stay'); toast(`Nap Pass added: ${PASS.n} naps`,'ticket'); }),750);
+    if(mode==='pass'){ const p=PASSES.find(x=>x.id===S.passPick);
+      S.user.pass=p.n; S.user.passKind=p.kind; S.user.passName=p.name; saveUser();
+      if(S.passReturn) return setTimeout(()=>{ S.passReturn=false; S.sheetMode='book'; S.usePass=true; payState='idle'; refreshSheet(); },750);
+      return setTimeout(()=>closeSheet(0,()=>{ render('stay'); toast(`${p.name} added: ${p.n} ${p.kind==='snack'?'visits':'naps'}`,'ticket'); }),750); }
     setTimeout(()=>closeSheet(0,()=>{
       S.booking={pkg:S.pkg,d:S.sel.d,t:S.sel.t,pay:S.pay,paid:q.total,saved:q.saved,usedPass:q.usedPass,addons:S.addons.slice(),code:'SS-'+Math.random().toString(36).slice(2,6).toUpperCase()};
       if(q.v){ S.user.vouchers=S.user.vouchers.filter(x=>x.id!==q.v.id); saveUser(); }
@@ -854,7 +873,10 @@ $('#app').addEventListener('click',e=>{
     case 'tidyDemo': return tidyPhoto(samplePhoto());
     case 'addon': S.addons=S.addons.includes(v)?S.addons.filter(x=>x!==v):S.addons.concat(v); return refreshSheet();
     case 'usePass': S.usePass=!S.usePass; return refreshSheet();
-    case 'buyPass': return openSheet('pass');
+    case 'buyPass': S.passReturn=false; S.passPick=S.passPick||'p10'; return openSheet('pass');
+    case 'upsellPass': S.passReturn=true; S.passPick=S.pkg==='snack'?'s8':'p10'; S.sheetMode='pass'; return refreshSheet();
+    case 'passPick': S.passPick=v; return refreshSheet();
+    case 'giftNap': S.user.pass--; saveUser(); render('stay'); return toast('Gift link ready to send. Your friend gets one free nap.','gift');
     case 'sheetSignIn': signIn(); return refreshSheet();
     case 'goAccount': return switchTab('account');
     case 'addStamp': { const msg=addStamp(); render('stay'); return toast(msg,'stamp'); }
