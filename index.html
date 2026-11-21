@@ -210,7 +210,7 @@ h2{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;
 .cta .l{font-weight:700;font-size:16px;line-height:1.2}
 .cta .s{font-size:12px;font-weight:500;opacity:.8;line-height:1.2}
 .cta-in{animation:swapIn .45s var(--spring)}
-.tabs{height:64px;border-radius:999px;display:grid;grid-template-columns:repeat(3,1fr);padding:6px;position:relative}
+.tabs{height:64px;border-radius:999px;display:grid;grid-template-columns:repeat(4,1fr);padding:6px;position:relative}
 .tabs .ind{position:absolute;top:6px;bottom:6px;left:0;border-radius:999px;background:color-mix(in srgb,var(--accent) 16%,transparent);
   box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 22%,transparent);z-index:0}
 .tabs button{border-radius:999px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;position:relative;z-index:1;
@@ -226,7 +226,8 @@ h2{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;
 .sheet{position:absolute;left:0;right:0;bottom:0;z-index:9;max-height:90%;overflow-y:auto;border-radius:var(--r-sheet) var(--r-sheet) 0 0;
   background:color-mix(in srgb,var(--panel) 82%,transparent);backdrop-filter:blur(40px) saturate(1.8);-webkit-backdrop-filter:blur(40px) saturate(1.8);
   border-top:1px solid var(--glass-edge);box-shadow:0 -12px 40px rgba(0,0,0,.2);
-  padding:0 max(18px,env(safe-area-inset-right,0px)) calc(18px + env(safe-area-inset-bottom,0px)) max(18px,env(safe-area-inset-left,0px));touch-action:none}
+  padding:0 max(18px,env(safe-area-inset-right,0px)) calc(18px + env(safe-area-inset-bottom,0px)) max(18px,env(safe-area-inset-left,0px))}
+.grab,.sh-head{touch-action:none}
 .sheet::before{content:"";position:absolute;inset:0;background-image:var(--noise);background-size:160px;opacity:.06;mix-blend-mode:overlay;pointer-events:none;border-radius:inherit}
 .grab{height:22px;display:grid;place-items:center;cursor:grab}
 .grab span{width:38px;height:5px;border-radius:3px;background:var(--faint)}
@@ -256,6 +257,19 @@ h2{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;
 @keyframes spin{to{transform:rotate(1turn)}}
 .pay-btn.done svg{width:22px;height:22px;stroke-width:3;animation:iconPop .6s var(--spring-bouncy)}
 .sh-note{font-size:12px;color:var(--dim);text-align:center;margin:10px 0 0}
+
+.sh-items .disc{color:var(--ok);font-weight:500}
+
+/* ---------- account + rewards ---------- */
+.me{display:flex;align-items:center;gap:14px;padding:16px 14px}
+.avatar{width:52px;height:52px;border-radius:50%;background:var(--accent);color:var(--on-tint);display:grid;place-items:center;font-weight:800;font-size:18px;letter-spacing:-.02em;flex:none}
+.me b{font-size:17px;display:block}
+.stamps{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;padding:18px 16px 10px}
+.stamp{aspect-ratio:1;border-radius:50%;border:1.5px dashed var(--line);display:grid;place-items:center;color:var(--faint)}
+.stamp.on{border:0;background:var(--accent);color:var(--on-tint);box-shadow:0 4px 12px var(--glow)}
+.stamp.gift{border:1.5px solid color-mix(in srgb,var(--accent) 45%,transparent);color:var(--accent)}
+.stamp.new{animation:iconPop .7s var(--spring-bouncy)}
+.stamp-note{padding:0 16px 14px;font-size:12.5px;color:var(--dim);text-align:center}
 
 /* ---------- other screens ---------- */
 .bk{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:16px 14px 10px}
@@ -288,7 +302,7 @@ h2{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;
 .big-ic{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;margin:48px auto 14px;animation:iconPop .7s var(--spring-bouncy)}
 .big-ic svg{width:30px;height:30px}
 .center{text-align:center}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);padding:14px 6px}
+.stats{display:grid;grid-template-columns:repeat(5,1fr);padding:14px 6px}
 .stats div{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0}
 .stats b{font-size:24px;font-weight:800;letter-spacing:-.02em}
 .stats span{font-size:11.5px;color:var(--dim);text-align:center;line-height:1.25}
@@ -328,6 +342,7 @@ textarea:focus,input[type=text]:focus{outline:none;border-color:var(--accent)}
         <span class="ind" id="ind"></span>
         <button role="tab" data-tab="book" aria-selected="true"><i data-lucide="moon"></i>Book</button>
         <button role="tab" data-tab="bookings" aria-selected="false"><i data-lucide="ticket"></i>Bookings<span class="dot"></span></button>
+        <button role="tab" data-tab="account" aria-selected="false"><i data-lucide="user-round"></i>Account<span class="dot"></span></button>
         <button role="tab" data-tab="feedback" aria-selected="false"><i data-lucide="message-square"></i>Feedback</button>
       </nav>
     </div>
@@ -392,8 +407,37 @@ const perOf=t=>PER.find(p=>+t.slice(0,2)>=p[2]&&+t.slice(0,2)<p[3])[0];
 const dayShort=d=>d===0?'Today':d===1?'Tomorrow':DAYS[d].toLocaleDateString('en-SG',{weekday:'short',day:'numeric',month:'short'});
 const dayLong=d=>(d===0?'Today, ':d===1?'Tomorrow, ':'')+DAYS[d].toLocaleDateString('en-SG',{weekday:'short',day:'numeric',month:'short'});
 
-const S={tab:'book',stacks:{book:['home'],bookings:['list'],feedback:['root']},
-  pkg:null,day:0,per:'a',sel:null,showFull:false,pay:'paynow',booking:null,history:[],fast:true,fb:{},fbText:'',fbWho:'',fbDone:false};
+const S={tab:'book',stacks:{book:['home'],bookings:['list'],account:['me'],feedback:['root']},
+  pkg:null,day:0,per:'a',sel:null,showFull:false,pay:'paynow',booking:null,history:[],fast:true,fb:{},fbText:'',fbWho:'',fbDone:false,
+  user:null,vSel:null,newV:false,justStamp:-1};
+
+/* ---------- account + rewards (demo: one example member, saved on this device) ---------- */
+const acct={get(){try{return JSON.parse(localStorage.getItem('ss-account')||'null')}catch(e){return null}},
+            set(v){try{v?localStorage.setItem('ss-account',JSON.stringify(v)):localStorage.removeItem('ss-account')}catch(e){}}};
+S.user=acct.get();
+const STAMPS=5;
+const VCH={welcome:{title:'$1 off your first nap',sub:'Welcome gift',off:()=>1},
+           free:{title:'Free Snooze',sub:'From your stamp card',off:()=>2},
+           upgrade:{title:'Free snack upgrade',sub:'Thanks for rating a nap',off:k=>k==='snack'?2.5:0}};
+const PERKS=[['gift','$1 off your first nap','Added as soon as you sign in'],['stamp','Free Snooze after 5 naps','One stamp for every nap'],
+             ['sunrise','20% off before noon','Member price on morning naps'],['cookie','Free snack upgrade','When you rate a nap']];
+const r2=n=>Math.round(n*100)/100;
+const saveUser=()=>acct.set(S.user);
+function grant(kind){ S.user.vouchers.push({id:kind+'-'+Date.now().toString(36),kind}); S.newV=true; }
+function signIn(){ S.user={name:'Alex Tan',email:'alex.tan@student.demo',stamps:0,vouchers:[],fbReward:false}; grant('welcome'); saveUser(); }
+function addStamp(){
+  S.user.stamps++; let msg;
+  if(S.user.stamps>=STAMPS){ S.user.stamps=0; S.justStamp=-1; grant('free'); msg='Stamp card full. Your next Snooze is free.'; }
+  else { S.justStamp=S.user.stamps-1; msg=`Stamp ${S.user.stamps} of ${STAMPS} collected`; }
+  saveUser(); return msg;
+}
+const usable=()=>S.user?S.user.vouchers.filter(v=>VCH[v.kind].off(S.pkg)>0):[];
+function chosenV(){ if(!S.user||S.vSel==='none') return null; const u=usable();
+  return u.find(v=>v.id===S.vSel)||u.sort((a,b)=>VCH[b.kind].off(S.pkg)-VCH[a.kind].off(S.pkg))[0]||null; }
+function quote(){ const p=PKG[S.pkg], lines=[]; let t=p.price;
+  if(S.user&&perOf(S.sel.t)==='m'){ const o=r2(t*.2); lines.push(['Member price, before noon',o]); t=r2(t-o); }
+  const v=chosenV(); if(v){ const o=Math.min(t,VCH[v.kind].off(S.pkg)); if(o>0){ lines.push([VCH[v.kind].title,o]); t=r2(t-o); } }
+  return {lines,total:t,v,saved:r2(p.price-t)}; }
 const PODS=[0,6,0,0]; // minutes until free (example)
 let DB=null, resp=[], local=[], napTimer=null, napLeft=1200, clearArmed=false;
 const store={get(){try{return JSON.parse(localStorage.getItem('ss-feedback')||'[]')}catch(e){return[]}},
@@ -411,6 +455,9 @@ SC.home={root:1,
  render:()=>`<header class="brand"><span class="wm">${ic('moon')}Snack &amp; Snooze</span><span class="loc">${ic('map-pin')}BizCampus</span></header>
   <section class="ig hero"><div class="hero-top"><div><span class="eyebrow">Right now</span><div class="big" id="podBig"></div><div class="ig-sub" id="podSub"></div></div><span class="pill">Example</span></div>
    <div class="pods" id="pods"></div></section>
+  <div class="ig" style="margin-top:10px">${S.user
+    ?row({tap:1,icon:'stamp',tone:'ok',title:`${S.user.stamps} of ${STAMPS} stamps`,sub:S.user.vouchers.length?`${S.user.vouchers.length} voucher${S.user.vouchers.length>1?'s':''} ready to use`:`${STAMPS-S.user.stamps} more nap${STAMPS-S.user.stamps>1?'s':''} to a free Snooze`,chev:1,attrs:'data-act="goAccount"'})
+    :row({tap:1,icon:'gift',tone:'ok',title:'$1 off your first nap',sub:'Sign in with your student ID',chev:1,attrs:'data-act="goAccount"'})}</div>
   <h2>Package</h2>
   <div class="pk-grid" role="radiogroup" aria-label="Package">${Object.entries(PKG).map(([k,p])=>`
    <button class="pk" role="radio" aria-checked="${S.pkg===k}" data-act="pkg" data-v="${k}"><span class="pk-badge">${ic('check')}</span>
@@ -467,10 +514,10 @@ function paintSlots(){
   }
   box.innerHTML=`<div class="ig" role="radiogroup" aria-label="Times">${shown.map((t,i)=>{const f=free(S.day,t),on=S.sel&&S.sel.d===S.day&&S.sel.t===t;
     return `<button class="ig-row tap slot${i<8?' rise':''}" style="animation-delay:${Math.min(i,8)*18}ms" role="radio" aria-checked="${!!on}" ${f?'':'aria-disabled="true"'} data-act="slot" data-v="${t}">
-     <span class="st"><b>${t}</b><small>to ${plus20(t)}</small>${t===soon&&f?'<span class="pill accent">Soonest</span>':''}</span>
+     <span class="st"><b>${t}</b><small>to ${plus20(t)}</small>${t===soon&&f?'<span class="pill accent">Soonest</span>':''}${S.user&&S.per==='m'&&f?'<span class="pill ok">−20%</span>':''}</span>
      <span class="mini" aria-hidden="true">${[0,1,2,3].map(j=>`<i class="${j<f?'on':''}"></i>`).join('')}</span>
      <span class="free-t ${f===0?'full':f===1?'low':''}">${f===0?'Full':f===1?'1 left':f+' free'}</span>${tick}</button>`}).join('')}</div>
-`;
+  ${S.per==='m'?`<p class="ig-footer">${S.user?'Member price: 20% off every morning nap.':'Members pay 20% less before noon. Sign in from Account.'}</p>`:''}`;
   icons();
 }
 function paintWhen(anim){
@@ -487,10 +534,10 @@ SC.list={root:1,
   if(!b&&!S.history.length) return h+`<div class="ig"><div class="empty"><span class="empty-icon">${ic('ticket')}</span><b>No bookings yet</b><p>Book a nap and your pass shows up here.</p><button class="link" data-act="goBook">Book a nap</button></div></div>`;
   if(b){ const p=PKG[b.pkg];
    h+=`<h2>Upcoming</h2><div class="ig"><div class="bk"><div><span class="eyebrow">${dayLong(b.d)}</span><div class="bk-t">${b.t}<small>to ${plus20(b.t)}</small></div></div><span class="pill ok">Booked</span></div>
-     ${row({icon:p.icon,title:esc(p.name),val:money(p.price)})}${row({icon:'map-pin',tone:'mute',title:'Pod',val:'Given at check-in'})}${row({icon:'credit-card',tone:'mute',title:'Paid with',val:METHODS.find(m=>m[0]===b.pay)[1]})}</div>
+     ${row({icon:p.icon,title:esc(p.name),val:money(b.paid)})}${b.saved>0?row({icon:'badge-percent',tone:'ok',title:'You saved',val:money(b.saved)}):''}${row({icon:'map-pin',tone:'mute',title:'Pod',val:'Given at check-in'})}${row({icon:'credit-card',tone:'mute',title:'Paid with',val:METHODS.find(m=>m[0]===b.pay)[1]})}</div>
      <p class="ig-footer">When you reach the pods, tap Check in to show your code.</p>`; }
   if(S.history.length){ h+=`<h2>Earlier</h2><div class="ig">${S.history.map(x=>row({icon:'check',tone:'ok',title:esc(PKG[x.pkg].name),sub:`${dayShort(x.d)}, ${x.t} · ${x.code}`,end:'<span class="pill ok">Done</span>'})).join('')}</div>`;
-   if(!S.fbDone) h+=`<h2>How did it go?</h2><div class="ig">${row({tap:1,icon:'message-square',title:'Rate your nap',sub:'Four quick questions',chev:1,attrs:'data-act="goRate"'})}</div>`; }
+   if(!S.fbDone) h+=`<h2>How did it go?</h2><div class="ig">${row({tap:1,icon:'message-square',title:'Rate your nap',sub:'Five quick questions',chev:1,attrs:'data-act="goRate"'})}</div>`; }
   return h; },
  dock:()=>S.booking?{l:'Check in at pod',s:`${dayShort(S.booking.d)}, ${S.booking.t}`,on:()=>push('checkin')}:null
 };
@@ -519,42 +566,64 @@ SC.collect={title:'Snack set',notabs:1,noback:1,
  render:()=>scanView('Show this at the BizCampus counter','Granola bar and cold fruit juice'),
  mount(){ drawQR(); startScan('Claimed. Enjoy your snack.','Have a good class',finishNap); }
 };
+SC.me={root:1,
+ render(){ const u=S.user;
+  if(!u) return `<header class="brand"><span class="wm">Account</span></header>
+   <div class="ig"><div class="empty"><span class="empty-icon">${ic('user-round')}</span><b>Sign in with your student ID</b><p>Members collect stamps, get vouchers and pay less for morning naps.</p></div></div>
+   <h2>Member perks</h2><div class="ig">${PERKS.map(([i,t,s])=>row({icon:i,tone:'ok',title:t,sub:s})).join('')}</div>`;
+  const n=u.stamps, left=STAMPS-n, ini=u.name.split(' ').map(w=>w[0]).join('').slice(0,2);
+  return `<header class="brand"><span class="wm">Account</span><span class="pill accent">Member</span></header>
+   <div class="ig me"><span class="avatar">${esc(ini)}</span><div><b>${esc(u.name)}</b><span class="ig-sub">${esc(u.email)}</span></div></div>
+   <h2>Stamp card</h2><div class="ig"><div class="stamps" aria-label="${n} of ${STAMPS} stamps">${[...Array(STAMPS)].map((_,i)=>
+     `<span class="stamp${i<n?' on':i===STAMPS-1?' gift':''}${i===S.justStamp?' new':''}">${i<n?ic('moon'):i===STAMPS-1?ic('gift'):''}</span>`).join('')}</div>
+    <p class="stamp-note">${left} more nap${left>1?'s':''} to a free Snooze. One stamp for every nap.</p></div>
+   <h2>Vouchers</h2>${u.vouchers.length
+     ?`<div class="ig">${u.vouchers.map(v=>row({icon:'ticket-percent',tone:'ok',title:VCH[v.kind].title,sub:VCH[v.kind].sub,end:'<span class="pill">At checkout</span>'})).join('')}</div>`
+     :`<div class="ig"><div class="empty" style="padding:24px 20px"><b>No vouchers right now</b><p>Fill your stamp card or rate a nap to earn one.</p></div></div>`}
+   <h2>Always on</h2><div class="ig">${row({icon:'sunrise',tone:'amber',title:'20% off before noon',sub:'Member price on every morning nap'})}</div>
+   <h2>Demo tools</h2><div class="ig">${row({tap:1,plain:1,title:'Add a stamp',attrs:'data-act="addStamp"',end:ic('plus')})}${row({tap:1,plain:1,title:'Sign out and reset',attrs:'data-act="signOut"',end:ic('log-out')})}</div>
+   <p class="ig-footer">Example account for the demo. Saved on this device only.</p>`; },
+ mount(){ S.justStamp=-1; S.newV=false; },
+ dock:()=>S.user?null:{l:'Sign in with student ID',s:'Demo account, no password needed',on:()=>{ signIn(); render('stay'); toast('Signed in. $1 welcome voucher added.','gift'); }}
+};
 SC.root={root:1,
  render:()=>`<header class="brand"><span class="wm">Feedback</span></header>
-  <div class="ig">${row({tap:1,icon:'message-square',title:'Rate your nap',sub:'Four quick questions, about a minute',chev:1,attrs:'data-act="go" data-v="form"'})}</div>
+  <div class="ig">${row({tap:1,icon:'message-square',title:'Rate your nap',sub:'Five quick questions, about a minute',chev:1,attrs:'data-act="go" data-v="form"'})}</div>
   <h2>For Group 4</h2>
   <div class="ig">${row({tap:1,icon:'list-checks',tone:'mute',title:'How to run a test',chev:1,attrs:'data-act="go" data-v="guide"'})}
    ${row({tap:1,icon:'bar-chart-3',tone:'mute',title:'Responses',end:`<span class="pill">${resp.length}</span>`,chev:1,attrs:'data-act="go" data-v="responses"'})}</div>
   <p class="ig-footer">${DB?'Responses from every tester go into one list for the group.':'Responses are saved on this phone. Copy them into the doc after each session.'}</p>`
 };
 SC.form={title:'Rate your nap',notabs:1,
- render(){ const qs=[['easy','How easy was booking?'],['price','Is the price fair?'],['use','Would you use it in a break?'],['better','Better than a coffee for energy?']];
+ render(){ const qs=[['easy','How easy was booking?'],['price','Is the price fair?'],['use','Would you use it in a break?'],['better','Better than a coffee for energy?'],['back','Would the stamp card and vouchers bring you back?']];
   return `<div class="ig" style="margin-top:6px">${qs.map(([k,l])=>`<div class="q"><span>${l}</span>
    <div class="rate" role="group" aria-label="${l}">${[1,2,3,4,5].map(n=>`<button data-act="fb" data-k="${k}" data-v="${n}" aria-pressed="${S.fb[k]===n}">${n}</button>`).join('')}</div>
    <div class="ends"><span>Not at all</span><span>Very</span></div></div>`).join('')}</div>
   <h2><label for="fbText">What would you change?</label></h2>
   <textarea id="fbText" rows="3" placeholder="Slot length, snacks, where the pods are…">${esc(S.fbText)}</textarea>
   <h2><label for="fbWho">About you (optional)</label></h2>
-  <input type="text" id="fbWho" placeholder="Year and course, e.g. Y1 DBA" value="${esc(S.fbWho)}">`; },
- dock:()=>Object.keys(S.fb).length===4?{l:'Send feedback',on:sendFeedback}:{l:'Answer all four',s:`${Object.keys(S.fb).length} of 4 done`,off:1}
+  <input type="text" id="fbWho" placeholder="Year and course, e.g. Y1 DBA" value="${esc(S.fbWho)}">
+  ${S.user&&!S.user.fbReward?`<p class="ig-footer">You get a free snack upgrade for sending this.</p>`:''}`; },
+ dock:()=>Object.keys(S.fb).length===5?{l:'Send feedback',on:sendFeedback}:{l:'Answer all five',s:`${Object.keys(S.fb).length} of 5 done`,off:1}
 };
 SC.guide={title:'How to run a test',
  render:()=>`<h2>Steps</h2><div class="ig"><ol class="steps">
   <li>Ask first: "Can we note your answers for our FOB2 class presentation? We won't record your name."</li>
   <li>Give one task: "You have an hour free and slept at 2 am. Book a nap with a snack for this afternoon."</li>
   <li>Hand over the phone and stay quiet. Note where they pause or ask for help.</li>
+  <li>If there's time: "Now sign in and book another nap." Watch whether they notice the voucher at checkout.</li>
   <li>When they finish, they fill in Rate your nap.</li>
   <li>Then ask: "Would you use this instead of buying a coffee? Why?"</li></ol></div>
   <p class="ig-footer">Aim for at least five testers before 30 Nov.</p>`
 };
 SC.responses={title:'Responses',
  render(){ if(!resp.length) return `<div class="ig" style="margin-top:8px"><div class="empty"><span class="empty-icon">${ic('bar-chart-3')}</span><b>No responses yet</b><p>They appear here when a tester sends feedback.</p></div></div>`;
-  const avg=k=>(resp.reduce((a,r)=>a+(+r[k]||0),0)/resp.length).toFixed(1);
+  const avg=k=>{ const h=resp.filter(r=>r[k]!=null); return h.length?(h.reduce((a,r)=>a+(+r[k]||0),0)/h.length).toFixed(1):'–'; };
   return `<h2>Average out of 5 · ${resp.length} tester${resp.length>1?'s':''}</h2>
-   <div class="ig"><div class="stats">${[['easy','Easy to book'],['price','Fair price'],['use','Would use'],['better','Beats coffee']].map(([k,l])=>`<div><b>${avg(k)}</b><span>${l}</span></div>`).join('')}</div></div>
+   <div class="ig"><div class="stats">${[['easy','Easy to book'],['price','Fair price'],['use','Would use'],['better','Beats coffee'],['back','Comes back']].map(([k,l])=>`<div><b>${avg(k)}</b><span>${l}</span></div>`).join('')}</div></div>
    <h2>All responses</h2><div class="ig">${resp.slice().reverse().map(r=>`<div class="resp">
      <span>${r.change?'"'+esc(r.change)+'"':'<span class="ig-sub">No comment</span>'}</span>
-     <span class="meta">${esc(r.t||'')}${r.who?' · '+esc(r.who):''} · ${esc(r.pkg||'')} · ${r.easy}/${r.price}/${r.use}/${r.better}</span></div>`).join('')}</div>
+     <span class="meta">${esc(r.t||'')}${r.who?' · '+esc(r.who):''} · ${esc(r.pkg||'')} · ${r.easy}/${r.price}/${r.use}/${r.better}${r.back!=null?'/'+r.back:''}</span></div>`).join('')}</div>
    <div class="ig" style="margin-top:22px">${row({tap:1,plain:1,title:'Copy all as text',attrs:'data-act="copy"',end:ic('copy')})}</div>
    <div class="ig" style="margin-top:12px"><button class="ig-row tap plain danger" data-act="clear">${clearArmed?'Tap again to delete all responses':'Delete all responses'}</button></div>`; }
 };
@@ -573,7 +642,7 @@ function render(dir){
   const st=S.stacks[S.tab], sc=SC[cur()], nav=$('#nav'), view=$('#view');
   const showNav=st.length>1;
   nav.hidden=!showNav;
-  if(showNav){ const prev=SC[st[st.length-2]], pt=prev.title||({book:'Book',bookings:'Bookings',feedback:'Feedback'}[S.tab]);
+  if(showNav){ const prev=SC[st[st.length-2]], pt=prev.title||({book:'Book',bookings:'Bookings',account:'Account',feedback:'Feedback'}[S.tab]);
     nav.innerHTML=`${sc.noback?'<span></span>':`<button class="back" data-act="back">${ic('chevron-left')}${esc(pt)}</button>`}<span class="ttl">${esc(sc.title||'')}</span><span></span>`; }
   view.className='view'+(showNav?' has-nav':' root')+(dir&&dir!=='stay'?' '+dir:'');
   const y=view.scrollTop; view.innerHTML=sc.render(); view.scrollTop=dir==='stay'?y:0;
@@ -598,6 +667,7 @@ function updateDock(){
   spring('tabsY',{to:hideTabs?120:0,cfg:'sheet',onUpdate:y=>{tabs.style.transform=`translateY(${y}px)`;tabs.style.opacity=String(Math.max(0,1-y/90))}});
   spring('ctaY',{to:!d?240:hideTabs?74:0,cfg:'sheet',onUpdate:y=>cta.style.transform=`translateY(${y}px)`});
   $('#tabs [data-tab="bookings"]').classList.toggle('has',!!S.booking);
+  $('#tabs [data-tab="account"]').classList.toggle('has',!!S.newV);
 }
 function paintTabs(popIcon){
   document.querySelectorAll('.tabs [data-tab]').forEach(b=>{ const on=b.dataset.tab===S.tab; b.setAttribute('aria-selected',on);
@@ -611,23 +681,34 @@ function toast(msg,icon){ document.querySelectorAll('.toast').forEach(t=>t.remov
 
 /* ---------- checkout sheet (Apple Pay style) ---------- */
 let sheetH=0, payState='idle';
-function sheetHTML(){ const p=PKG[S.pkg], m=METHODS.find(x=>x[0]===S.pay);
+function voucherRow(){
+  if(!S.user) return `<button class="sh-row" data-act="sheetSignIn"><span class="k">Rewards</span><span class="v"><span class="tile ok">${ic('gift')}</span>Sign in for $1 off</span><span class="chev">${ic('chevron-right')}</span></button>`;
+  const u=usable(), c=chosenV();
+  if(!u.length) return `<div class="sh-row"><span class="k">Voucher</span><span class="v" style="color:var(--dim)">None for this nap</span><span></span></div>`;
+  return `<button class="sh-row" data-act="vouchers" aria-expanded="false"><span class="k">Voucher</span><span class="v"><span class="tile ok">${ic('ticket-percent')}</span>${c?esc(VCH[c.kind].title):'Not used'}</span><span class="chev">${ic('chevron-right')}</span></button>
+  <div class="methods" id="vlist"><div><div class="ig" role="radiogroup" aria-label="Voucher">${u.map(v=>row({tap:1,icon:'ticket-percent',tone:'ok',title:esc(VCH[v.kind].title),sub:VCH[v.kind].sub,end:tick,attrs:`role="radio" aria-checked="${!!c&&c.id===v.id}" data-act="voucher" data-v="${v.id}"`})).join('')}
+   ${row({tap:1,icon:'x',tone:'mute',title:"Don't use a voucher",end:tick,attrs:`role="radio" aria-checked="${!c}" data-act="voucher" data-v="none"`})}</div></div></div>`;
+}
+function refreshSheet(){ const sh=$('#sheet'); sh.innerHTML=sheetHTML(); icons(); bindDrag(); sheetH=sh.offsetHeight; }
+function sheetHTML(){ const p=PKG[S.pkg], m=METHODS.find(x=>x[0]===S.pay), q=quote();
   return `<div class="grab" id="grab"><span></span></div>
   <div class="sh-head"><span class="tile">${ic('moon')}</span><div><b>Snack &amp; Snooze</b><span class="ig-sub">BizCampus nap pods</span></div>
    <button class="x" data-act="closeSheet" aria-label="Close">${ic('x')}</button></div>
   <button class="sh-row" data-act="methods" aria-expanded="false" id="pmRow"><span class="k">Pay with</span><span class="v"><span class="tile mute">${ic(m[2])}</span>${m[1]}</span><span class="chev">${ic('chevron-right')}</span></button>
   <div class="methods" id="methods"><div><div class="ig" role="radiogroup" aria-label="Payment method">${METHODS.map(([v,l,i])=>row({tap:1,icon:i,tone:'mute',title:l,end:tick,attrs:`role="radio" aria-checked="${S.pay===v}" data-act="method" data-v="${v}"`})).join('')}</div></div></div>
+  ${voucherRow()}
   <div class="sh-row"><span class="k">Booking</span><span class="v">${dayLong(S.sel.d)}<br>${S.sel.t}–${plus20(S.sel.t)}</span><span></span></div>
-  <div class="sh-items"><div><span>${esc(p.name)}</span><span>${money(p.price)}</span></div>${S.pkg==='snack'?'<div><span>Granola bar and fruit juice</span><span>Included</span></div>':''}</div>
-  <div class="sh-row total"><span class="k">Pay BizCampus</span><span class="v">${money(p.price)}</span></div>
-  <button class="pay-btn" id="payBtn" data-act="pay">Pay ${money(p.price)}</button>
+  <div class="sh-items"><div><span>${esc(p.name)}</span><span>${money(p.price)}</span></div>${S.pkg==='snack'?'<div><span>Granola bar and fruit juice</span><span>Included</span></div>':''}
+   ${q.lines.map(([l,o])=>`<div class="disc"><span>${esc(l)}</span><span>−${money(o)}</span></div>`).join('')}</div>
+  <div class="sh-row total"><span class="k">Pay BizCampus</span><span class="v">${money(q.total)}</span></div>
+  <button class="pay-btn" id="payBtn" data-act="pay">${q.total>0?'Pay '+money(q.total):'Book for free'}</button>
   <p class="sh-note">Prototype. No money is taken.</p>`; }
 function applySheet(y){ const sh=$('#sheet'); sh.style.transform=`translateY(${y}px)`;
   const p=Math.max(0,Math.min(1,1-y/sheetH)); const st=$('#stage');
   st.style.transform=`scale(${1-.06*p})`; st.style.borderRadius=`${26*p}px`; st.style.filter=`brightness(${1-.12*p})`;
   $('#scrim').style.opacity=String(.38*p); }
 function openSheet(){
-  payState='idle'; const sh=$('#sheet'); sh.innerHTML=sheetHTML(); icons(); sh.hidden=false; $('#scrim').hidden=false;
+  payState='idle'; S.vSel=null; const sh=$('#sheet'); sh.innerHTML=sheetHTML(); icons(); sh.hidden=false; $('#scrim').hidden=false;
   sheetH=sh.offsetHeight; setNow('sheetY',sheetH); applySheet(sheetH);
   spring('sheetY',{to:0,cfg:'sheet',onUpdate:applySheet}); bindDrag();
 }
@@ -647,13 +728,15 @@ function bindDrag(){
     if(cy>120||vel>650) closeSheet(vel); else spring('sheetY',{to:0,cfg:cy<0?'bound':'sheet',v0:vel,onUpdate:applySheet}); };
 }
 function pay(){
-  if(payState!=='idle') return; payState='busy'; const b=$('#payBtn');
+  if(payState!=='idle') return; payState='busy'; const b=$('#payBtn'), q=quote();
   b.innerHTML='<span class="spin"></span>Processing';
   setTimeout(()=>{ payState='done'; b.classList.add('done'); b.innerHTML=ic('check')+'Done'; icons();
     setTimeout(()=>closeSheet(0,()=>{
-      S.booking={pkg:S.pkg,d:S.sel.d,t:S.sel.t,pay:S.pay,code:'SS-'+Math.random().toString(36).slice(2,6).toUpperCase()};
+      S.booking={pkg:S.pkg,d:S.sel.d,t:S.sel.t,pay:S.pay,paid:q.total,saved:q.saved,code:'SS-'+Math.random().toString(36).slice(2,6).toUpperCase()};
+      if(q.v){ S.user.vouchers=S.user.vouchers.filter(x=>x.id!==q.v.id); saveUser(); }
       S.stacks.book=['home']; S.pkg=null; S.sel=null; S.day=0;
-      S.tab='bookings'; S.stacks.bookings=['list']; render('fade'); toast(`Booked: ${dayShort(S.booking.d).toLowerCase()} at ${S.booking.t}`);
+      S.tab='bookings'; S.stacks.bookings=['list']; render('fade');
+      toast(`Booked: ${dayShort(S.booking.d).toLowerCase()} at ${S.booking.t}${q.saved>0?`. You saved ${money(q.saved)}.`:''}`);
     }),750); },1100);
 }
 
@@ -678,11 +761,17 @@ $('#app').addEventListener('click',e=>{
     case 'showFull': S.showFull=!S.showFull; b.setAttribute('aria-pressed',S.showFull); return paintSlots();
     case 'closeSheet': return closeSheet(0);
     case 'methods': { const m=$('#methods'), o=m.classList.toggle('open'); b.setAttribute('aria-expanded',o); return; }
-    case 'method': S.pay=v; { const sh=$('#sheet'); sh.innerHTML=sheetHTML(); icons(); bindDrag(); } return;
+    case 'method': S.pay=v; return refreshSheet();
+    case 'vouchers': { const m=$('#vlist'), o=m.classList.toggle('open'); b.setAttribute('aria-expanded',o); return; }
+    case 'voucher': S.vSel=v; return refreshSheet();
+    case 'sheetSignIn': signIn(); return refreshSheet();
+    case 'goAccount': return switchTab('account');
+    case 'addStamp': { const msg=addStamp(); render('stay'); return toast(msg,'stamp'); }
+    case 'signOut': S.user=null; S.newV=false; acct.set(null); render('stay'); return toast('Signed out. Demo account reset.','log-out');
     case 'pay': return pay();
     case 'fast': S.fast=!S.fast; b.setAttribute('aria-checked',S.fast); return startNap(true);
     case 'fb': S.fb[b.dataset.k]=+v; b.parentNode.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b)); return updateDock();
-    case 'copy': { const t=resp.map((r,i)=>`#${i+1} ${r.t||''}${r.who?' ('+r.who+')':''}, ${r.pkg}: easy ${r.easy}/5, fair price ${r.price}/5, would use ${r.use}/5, beats coffee ${r.better}/5${r.change?'. Change: "'+r.change+'"':''}`).join('\n');
+    case 'copy': { const t=resp.map((r,i)=>`#${i+1} ${r.t||''}${r.who?' ('+r.who+')':''}, ${r.pkg}: easy ${r.easy}/5, fair price ${r.price}/5, would use ${r.use}/5, beats coffee ${r.better}/5${r.back!=null?', comes back '+r.back+'/5':''}${r.change?'. Change: "'+r.change+'"':''}`).join('\n');
       navigator.clipboard.writeText(t).then(()=>toast('Copied. Paste it into the CA1 doc.','copy')).catch(()=>toast('Copy is blocked here. Select the responses instead.','info')); return; }
     case 'clear': if(!clearArmed){ clearArmed=true; render('stay'); setTimeout(()=>{ if(clearArmed){ clearArmed=false; if(cur()==='responses') render('stay'); } },3000); return; }
       clearArmed=false;
@@ -698,7 +787,8 @@ addEventListener('resize',()=>paintTabs(false));
 function sendFeedback(){
   const rec={ts:Date.now(),t:new Date().toLocaleString('en-SG',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}),...S.fb,
     change:S.fbText.trim().slice(0,1000),who:S.fbWho.trim().slice(0,60),pkg:(S.history[0]&&PKG[S.history[0].pkg].name)||'Not booked'};
-  const done=msg=>{ S.fb={};S.fbText='';S.fbWho='';S.fbDone=true; S.tab='feedback'; S.stacks.feedback=['root']; render('pop'); toast(msg); };
+  const done=msg=>{ if(S.user&&!S.user.fbReward){ S.user.fbReward=true; grant('upgrade'); saveUser(); msg+=' Free snack upgrade added.'; }
+    S.fb={};S.fbText='';S.fbWho='';S.fbDone=true; S.tab='feedback'; S.stacks.feedback=['root']; render('pop'); toast(msg); };
   ctaAction=null;
   if(DB) DB.collection('feedback').add(rec).then(()=>done('Thanks. Feedback sent.'))
     .catch(()=>{ local.push(rec); store.set(local); resp.push(rec); done('Saved on this phone only. Copy it into the doc.'); });
@@ -713,7 +803,8 @@ function startNap(keep){
   paint();
   napTimer=setInterval(()=>{ napLeft=Math.max(0,napLeft-(S.fast?60:1)); paint(); if(!napLeft){ clearInterval(napTimer); napTimer=null; chime(); push('alarm'); } },1000);
 }
-function finishNap(){ S.history.unshift(S.booking); S.booking=null; S.stacks.bookings=['list']; render('fade'); toast('All done. Good luck in class.'); }
+function finishNap(){ S.history.unshift(S.booking); S.booking=null; S.stacks.bookings=['list'];
+  const msg=S.user?addStamp():'All done. Good luck in class.'; render('fade'); toast(msg,S.user?'stamp':'check'); }
 function chime(){ try{ const c=new (window.AudioContext||window.webkitAudioContext)();
   [0,.3,.6].forEach((t,i)=>{const o=c.createOscillator(),g=c.createGain();o.frequency.value=[660,880,990][i];o.connect(g);g.connect(c.destination);
     g.gain.setValueAtTime(.0001,c.currentTime+t);g.gain.exponentialRampToValueAtTime(.25,c.currentTime+t+.02);g.gain.exponentialRampToValueAtTime(.0001,c.currentTime+t+.5);
