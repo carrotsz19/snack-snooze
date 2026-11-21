@@ -270,6 +270,14 @@ h2{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;
 .sh-add .ig{margin:8px 0 10px;box-shadow:none;border:1px solid var(--line)}
 .pk-peak{font-size:11.5px;color:var(--dim);line-height:1.3;margin-top:2px}
 .stats.three{grid-template-columns:repeat(3,1fr)}
+.photo{padding:12px}
+.photo img{width:100%;aspect-ratio:16/10;object-fit:cover;border-radius:10px;display:block}
+.ph-pick{display:flex;flex-direction:column;align-items:center;gap:4px;padding:26px 12px;border:1.5px dashed var(--line);border-radius:10px;cursor:pointer;color:var(--accent);text-align:center}
+.ph-pick svg{width:26px;height:26px}
+.ph-pick b{color:var(--ink);font-size:15px}
+.ph-st{display:flex;align-items:center;gap:8px;margin-top:10px;font-weight:600;color:var(--dim)}
+.ph-st.ok{color:var(--ok)}
+.ph-st .spin{width:16px;height:16px;border-width:2px}
 
 /* ---------- account + rewards ---------- */
 .me{display:flex;align-items:center;gap:14px;padding:16px 14px}
@@ -487,7 +495,7 @@ SC.home={root:1,
   ${S.user&&!hasPass()?`<div class="ig" style="margin-top:10px">${row({tap:1,icon:'ticket',title:`Nap Pass: ${PASS.n} naps for ${money(PASS.price)}`,sub:`${money(PASS.price/PASS.n)} a nap, even at lunch`,chev:1,attrs:'data-act="buyPass"'})}</div>`:''}
   <h2>In every pod</h2>
   <div class="ig feats">${[['snowflake','Aircon'],['bed-double','Mattress'],['lock','Private'],['alarm-clock','20-min alarm']].map(([i,l])=>`<div>${ic(i)}<span>${l}</span></div>`).join('')}</div>
-  <p class="ig-footer">Wiped down and UV-cleaned after every nap, with a fresh mattress sheet and pillow cover each time.</p>`,
+  <p class="ig-footer">Each napper tidies up and photographs the pod, then it runs a UV clean. Pillow covers and sheets are washed and reused.</p>`,
  mount(){ paintPods(); },
  dock:()=>S.pkg?{l:'Choose a time',s:`${PKG[S.pkg].name} · from ${money(PKG[S.pkg].price)}`,on:()=>push('time')}:{l:'Pick a package',off:1}
 };
@@ -560,7 +568,7 @@ SC.list={root:1,
   if(!b&&!S.history.length) return h+`<div class="ig"><div class="empty"><span class="empty-icon">${ic('ticket')}</span><b>No bookings yet</b><p>Book a nap and your pass shows up here.</p><button class="link" data-act="goBook">Book a nap</button></div></div>`;
   if(b){ const p=PKG[b.pkg];
    h+=`<h2>Upcoming</h2><div class="ig"><div class="bk"><div><span class="eyebrow">${dayLong(b.d)}</span><div class="bk-t">${b.t}<small>to ${plus20(b.t)}</small></div></div><span class="pill ok">Booked</span></div>
-     ${row({icon:p.icon,title:esc(p.name),val:money(b.paid)})}${(b.addons||[]).map(k=>{const a=ADDONS.find(x=>x[0]===k); return row({icon:a[3],tone:'mute',title:a[1],sub:a[4]});}).join('')}${b.saved>0?row({icon:'badge-percent',tone:'ok',title:b.usedPass?'Covered by Nap Pass':'You saved',val:money(b.saved)}):''}${row({icon:'map-pin',tone:'mute',title:'Pod',val:'Given at check-in'})}${row({icon:'sparkles',tone:'mute',title:'Cleaned before you arrive',sub:'Fresh sheet and pillow cover'})}${row({icon:'credit-card',tone:'mute',title:'Paid with',val:METHODS.find(m=>m[0]===b.pay)[1]})}</div>
+     ${row({icon:p.icon,title:esc(p.name),val:money(b.paid)})}${(b.addons||[]).map(k=>{const a=ADDONS.find(x=>x[0]===k); return row({icon:a[3],tone:'mute',title:a[1],sub:a[4]});}).join('')}${b.saved>0?row({icon:'badge-percent',tone:'ok',title:b.usedPass?'Covered by Nap Pass':'You saved',val:money(b.saved)}):''}${row({icon:'map-pin',tone:'mute',title:'Pod',val:'Given at check-in'})}${row({icon:'sparkles',tone:'mute',title:'Cleaned before you arrive',sub:'Freshly washed sheet and pillow cover'})}${row({icon:'credit-card',tone:'mute',title:'Paid with',val:METHODS.find(m=>m[0]===b.pay)[1]})}</div>
      <p class="ig-footer">When you reach the pods, tap Check in to show your code.</p>`; }
   if(S.history.length){ h+=`<h2>Earlier</h2><div class="ig">${S.history.map(x=>row({icon:'check',tone:'ok',title:esc(PKG[x.pkg].name),sub:`${dayShort(x.d)}, ${x.t} · ${x.code}`,end:'<span class="pill ok">Done</span>'})).join('')}</div>`;
    if(!S.fbDone) h+=`<h2>How did it go?</h2><div class="ig">${row({tap:1,icon:'message-square',title:'Rate your nap',sub:'Five quick questions',chev:1,attrs:'data-act="goRate"'})}</div>`; }
@@ -585,10 +593,28 @@ SC.nap={title:'Pod 3',notabs:1,noback:1,
 };
 SC.alarm={notabs:1,noback:1,
  render:()=>`<div class="big-ic" style="background:var(--accent-soft);color:var(--accent)">${ic('sun')}</div>
-  <h1 class="center">Time to get up</h1><p class="lede center">Twenty minutes is long enough to feel better and short enough not to feel groggy.</p>
-  <div class="ig" style="margin-top:22px">${row({icon:'sparkles',title:'Leave the sheet and pillow cover',sub:'Drop them in the bin by the door. We clean the pod for the next person.'})}</div>`,
- dock:()=>({l:"I'm up",on:()=>collectList().length?push('collect'):finishNap()})
+  <h1 class="center">Time to get up</h1><p class="lede center">Twenty minutes is long enough to feel better and short enough not to feel groggy.</p>`,
+ dock:()=>({l:"I'm up",s:'Next: a 2-minute tidy-up',on:()=>{ S.tidy={c:{},photo:null,st:'idle'}; push('tidy'); }})
 };
+const TIDY=[['cover','Pillow cover and sheet in the laundry bag','shirt'],['wipe','Mattress wiped with the wipe provided','spray-can'],['bin','Rubbish in the bin, nothing left behind','trash-2']];
+const tidyReady=()=>TIDY.every(([k])=>S.tidy.c[k])&&S.tidy.st==='ok';
+SC.tidy={title:'Tidy up',notabs:1,noback:1,
+ render:()=>`<p class="lede" style="margin:8px 4px 0">Two minutes, so Pod 3 is fresh for the next person. Your stamp counts once it's done.</p>
+  <div class="ig" style="margin-top:14px" role="group" aria-label="Tidy-up checklist">${TIDY.map(([k,l,i])=>row({tap:1,icon:i,tone:'mute',title:l,end:tick,attrs:`role="checkbox" aria-checked="${!!S.tidy.c[k]}" data-act="tidy" data-v="${k}"`})).join('')}</div>
+  <h2>Photo of the empty pod</h2>
+  <div class="ig photo">${S.tidy.photo?`<img src="${S.tidy.photo}" alt="Your photo of the pod"><div class="ph-st${S.tidy.st==='ok'?' ok':''}">${S.tidy.st==='ok'?ic('circle-check')+'Looks good. Pod 3 is ready for the next person.':'<span class="spin"></span>Checking the photo…'}</div>`
+    :`<label class="ph-pick" for="tidyPhoto">${ic('camera')}<b>Take a photo</b><span class="ig-sub">Show the bare mattress and the empty pod</span></label><input type="file" id="tidyPhoto" accept="image/*" capture="environment" hidden>`}</div>
+  ${S.tidy.photo?'':`<button class="link" style="align-self:center" data-act="tidyDemo">Demo: use a sample photo</button>`}
+  <p class="ig-footer">Only the pod is in the photo, never you, and it's deleted after 24 hours. The pod still runs a UV clean after every nap, and counter staff spot-check pods during the day. Demo: the photo check is simulated.</p>`,
+ dock:()=>tidyReady()?{l:collectList().length?'Done, collect my order':'Done',on:()=>collectList().length?push('collect'):finishNap()}
+   :{l:'Finish tidying up',s:`${TIDY.filter(([k])=>S.tidy.c[k]).length} of ${TIDY.length} done · ${S.tidy.st==='ok'?'photo checked':'photo needed'}`,off:1}
+};
+function tidyPhoto(src){ S.tidy.photo=src; S.tidy.st='checking'; render('stay');
+  setTimeout(()=>{ if(cur()!=='tidy') return; S.tidy.st='ok'; render('stay'); },1800); }
+function samplePhoto(){ const c=document.createElement('canvas'); c.width=480; c.height=300; const x=c.getContext('2d');
+  x.fillStyle='#2b3140'; x.fillRect(0,0,480,300); x.fillStyle='#3a4256'; x.beginPath(); x.roundRect(30,30,420,240,40); x.fill();
+  x.fillStyle='#d9dde6'; x.beginPath(); x.roundRect(70,120,340,120,18); x.fill(); x.fillStyle='#c4c9d4'; x.fillRect(70,120,340,14);
+  x.fillStyle='rgba(125,168,214,.35)'; x.fillRect(30,30,420,40); return c.toDataURL('image/png'); }
 const collectList=()=>(S.booking.pkg==='snack'?['Granola bar and fruit juice']:[]).concat((S.booking.addons||[]).includes('coffee')?['Coffee']:[]);
 SC.collect={title:'Collect',notabs:1,noback:1,
  render:()=>scanView('Show this at the BizCampus counter',collectList().join(' and ')),
@@ -630,9 +656,10 @@ SC.biz={title:'How it makes money',
   ${row({icon:'ticket',title:'Nap Pass',sub:`${PASS.n} naps for ${money(PASS.price)}, paid up front. Brings regulars back and money in early.`,val:'In nap sales'})}
   ${row({icon:'coffee',title:'Add-ons',sub:`Eye mask ${money(1.5)}, coffee ready when you wake ${money(1.8)}. About 1 in 10 naps.`,val:'~$140'})}
   ${row({icon:'megaphone',title:'Ad space',sub:'Brands pay for the pod door panels and a card in the app.',val:'~$200'})}
-  ${row({icon:'handshake',title:'Sponsored snack',sub:'A brand supplies the granola bar and juice free, for the exposure.',val:'Saves ~$410'})}</div>
-  <h2>Example month</h2><div class="ig"><div class="stats three"><div><b>$3,260</b><span>Money in</span></div><div><b>$1,110</b><span>Costs</span></div><div><b>~$2,150</b><span>Profit</span></div></div></div>
-  <p class="ig-footer">Estimates: 4 pods, about 39 naps a day (35% of slots), 22 weekdays. Costs: pods over 3 years, power and repairs, pillow covers and wipes. Counter staff already at BizCampus do the cleaning checks, so there's no extra wage. Check every number before it goes on a slide.</p>`
+  ${row({icon:'handshake',title:'Sponsored snack',sub:'A brand supplies the granola bar and juice free, for the exposure.',val:'Saves ~$410'})}
+  ${row({icon:'recycle',title:'Reusable covers, students tidy up',sub:'Washed covers instead of disposables, and a 2-minute tidy-up instead of a cleaner.',val:'Saves ~$170'})}</div>
+  <h2>Example month</h2><div class="ig"><div class="stats three"><div><b>$3,260</b><span>Money in</span></div><div><b>$940</b><span>Costs</span></div><div><b>~$2,320</b><span>Profit</span></div></div></div>
+  <p class="ig-footer">Estimates: 4 pods, about 39 naps a day (35% of slots), 22 weekdays. Costs: pods over 3 years, power and repairs, laundry for reusable covers (about $0.15 each) and wipes. Counter staff already at BizCampus do the cleaning checks, so there's no extra wage. Check every number before it goes on a slide.</p>`
 };
 SC.form={title:'Rate your nap',notabs:1,
  render(){ const qs=[['easy','How easy was booking?'],['price','Is the price fair?'],['use','Would you use it in a break?'],['better','Better than a coffee for energy?'],['back','Would the stamp card and vouchers bring you back?']];
@@ -823,6 +850,8 @@ $('#app').addEventListener('click',e=>{
     case 'method': S.pay=v; return refreshSheet();
     case 'vouchers': { const m=$('#vlist'), o=m.classList.toggle('open'); b.setAttribute('aria-expanded',o); return; }
     case 'voucher': S.vSel=v; return refreshSheet();
+    case 'tidy': S.tidy.c[v]=!S.tidy.c[v]; b.setAttribute('aria-checked',S.tidy.c[v]); return updateDock();
+    case 'tidyDemo': return tidyPhoto(samplePhoto());
     case 'addon': S.addons=S.addons.includes(v)?S.addons.filter(x=>x!==v):S.addons.concat(v); return refreshSheet();
     case 'usePass': S.usePass=!S.usePass; return refreshSheet();
     case 'buyPass': return openSheet('pass');
@@ -842,6 +871,7 @@ $('#app').addEventListener('click',e=>{
   }
 });
 $('#scrim').addEventListener('click',()=>{ if(payState==='idle') closeSheet(0); });
+document.addEventListener('change',e=>{ if(e.target.id==='tidyPhoto'&&e.target.files&&e.target.files[0]) tidyPhoto(URL.createObjectURL(e.target.files[0])); });
 document.addEventListener('input',e=>{ if(e.target.id==='fbText') S.fbText=e.target.value; if(e.target.id==='fbWho') S.fbWho=e.target.value; });
 addEventListener('resize',()=>paintTabs(false));
 
