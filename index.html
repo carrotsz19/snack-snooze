@@ -127,6 +127,12 @@ h2{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;
 @keyframes breathe{50%{opacity:.35;transform:scale(.86)}}
 .cap .fill{position:absolute;left:0;right:0;bottom:0;height:100%;transform-origin:bottom;background:var(--amber-soft);transition:transform .6s var(--spring)}
 .cap svg{position:relative;color:var(--amber);width:18px;height:18px}
+.pod.clean > span{color:var(--accent);font-weight:600}
+.pod.clean .cap{border-color:color-mix(in srgb,var(--accent) 30%,transparent)}
+.pod.clean .fill{background:var(--accent-soft)}
+.pod.clean .cap svg{color:var(--accent)}
+.cap .wipe{position:absolute;left:0;right:0;top:-40%;height:40%;background:linear-gradient(transparent,color-mix(in srgb,var(--accent) 28%,transparent),transparent);animation:wipe 2.2s ease-in-out infinite}
+@keyframes wipe{to{transform:translateY(350%)}}
 .pk-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;position:relative;z-index:1}
 .pk{background:var(--panel);border-radius:18px;box-shadow:var(--elev-1);padding:14px;display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;position:relative;
   transition:transform .35s var(--spring),box-shadow .25s}
@@ -438,7 +444,8 @@ function quote(){ const p=PKG[S.pkg], lines=[]; let t=p.price;
   if(S.user&&perOf(S.sel.t)==='m'){ const o=r2(t*.2); lines.push(['Member price, before noon',o]); t=r2(t-o); }
   const v=chosenV(); if(v){ const o=Math.min(t,VCH[v.kind].off(S.pkg)); if(o>0){ lines.push([VCH[v.kind].title,o]); t=r2(t-o); } }
   return {lines,total:t,v,saved:r2(p.price-t)}; }
-const PODS=[0,6,0,0]; // minutes until free (example)
+const CLEAN=5; // minutes to wipe down and UV-clean a pod
+const PODS=[{st:'free',m:0},{st:'busy',m:6},{st:'clean',m:4},{st:'free',m:0}]; // example; m = minutes left in that state
 let DB=null, resp=[], local=[], napTimer=null, napLeft=1200, clearArmed=false;
 const store={get(){try{return JSON.parse(localStorage.getItem('ss-feedback')||'[]')}catch(e){return[]}},
              set(v){try{localStorage.setItem('ss-feedback',JSON.stringify(v))}catch(e){}}};
@@ -464,17 +471,20 @@ SC.home={root:1,
     <span class="tile">${ic(p.icon)}</span><span class="pk-name">${esc(p.name)}</span><span class="pk-sub">${p.sub}</span>
     <span class="pk-price">$${Math.floor(p.price)}<small>.${p.price.toFixed(2).split('.')[1]}</small></span></button>`).join('')}</div>
   <h2>In every pod</h2>
-  <div class="ig feats">${[['snowflake','Aircon'],['bed-double','Mattress'],['lock','Private'],['alarm-clock','20-min alarm']].map(([i,l])=>`<div>${ic(i)}<span>${l}</span></div>`).join('')}</div>`,
+  <div class="ig feats">${[['snowflake','Aircon'],['bed-double','Mattress'],['lock','Private'],['alarm-clock','20-min alarm']].map(([i,l])=>`<div>${ic(i)}<span>${l}</span></div>`).join('')}</div>
+  <p class="ig-footer">Wiped down and UV-cleaned after every nap, with a fresh mattress sheet and pillow cover each time.</p>`,
  mount(){ paintPods(); },
  dock:()=>S.pkg?{l:'Choose a time',s:`${PKG[S.pkg].name} · ${money(PKG[S.pkg].price)}`,on:()=>push('time')}:{l:'Pick a package',off:1}
 };
 function paintPods(){
   const big=$('#podBig'); if(!big) return;
-  const n=PODS.filter(m=>!m).length, busy=PODS.map((m,i)=>[m,i]).filter(x=>x[0]).sort((a,b)=>a[0]-b[0]);
+  const n=PODS.filter(p=>p.st==='free').length, ready=p=>p.st==='busy'?p.m+CLEAN:p.m;
+  const next=PODS.map((p,i)=>[p,i]).filter(x=>x[0].st!=='free').sort((a,b)=>ready(a[0])-ready(b[0]))[0];
   big.textContent=n?`${n} pod${n>1?'s':''} free`:'All pods in use';
-  $('#podSub').textContent=busy.length?`Pod ${busy[0][1]+1} is free in ${busy[0][0]} min`:'Walk in or book ahead';
-  $('#pods').innerHTML=PODS.map((m,i)=>`<div class="pod ${m?'busy':'free'}"><div class="cap">${m?`<span class="fill" style="transform:scaleY(${m/20})"></span>${ic('moon')}`:'<span class="glow"></span>'}</div>
-    <b>Pod ${i+1}</b><span>${m?m+' min':'Free'}</span></div>`).join('');
+  $('#podSub').textContent=next?`Pod ${next[1]+1} ${next[0].st==='clean'?'is being cleaned, ready':'is free'} in ${ready(next[0])} min`:'Walk in or book ahead';
+  $('#pods').innerHTML=PODS.map((p,i)=>`<div class="pod ${p.st}"><div class="cap">${p.st==='busy'?`<span class="fill" style="transform:scaleY(${p.m/20})"></span>${ic('moon')}`
+      :p.st==='clean'?`<span class="fill" style="transform:scaleY(${p.m/CLEAN})"></span><span class="wipe"></span>${ic('sparkles')}`:'<span class="glow"></span>'}</div>
+    <b>Pod ${i+1}</b><span>${p.st==='busy'?p.m+' min':p.st==='clean'?'Cleaning':'Free'}</span></div>`).join('');
   icons();
 }
 
@@ -534,7 +544,7 @@ SC.list={root:1,
   if(!b&&!S.history.length) return h+`<div class="ig"><div class="empty"><span class="empty-icon">${ic('ticket')}</span><b>No bookings yet</b><p>Book a nap and your pass shows up here.</p><button class="link" data-act="goBook">Book a nap</button></div></div>`;
   if(b){ const p=PKG[b.pkg];
    h+=`<h2>Upcoming</h2><div class="ig"><div class="bk"><div><span class="eyebrow">${dayLong(b.d)}</span><div class="bk-t">${b.t}<small>to ${plus20(b.t)}</small></div></div><span class="pill ok">Booked</span></div>
-     ${row({icon:p.icon,title:esc(p.name),val:money(b.paid)})}${b.saved>0?row({icon:'badge-percent',tone:'ok',title:'You saved',val:money(b.saved)}):''}${row({icon:'map-pin',tone:'mute',title:'Pod',val:'Given at check-in'})}${row({icon:'credit-card',tone:'mute',title:'Paid with',val:METHODS.find(m=>m[0]===b.pay)[1]})}</div>
+     ${row({icon:p.icon,title:esc(p.name),val:money(b.paid)})}${b.saved>0?row({icon:'badge-percent',tone:'ok',title:'You saved',val:money(b.saved)}):''}${row({icon:'map-pin',tone:'mute',title:'Pod',val:'Given at check-in'})}${row({icon:'sparkles',tone:'mute',title:'Cleaned before you arrive',sub:'Fresh sheet and pillow cover'})}${row({icon:'credit-card',tone:'mute',title:'Paid with',val:METHODS.find(m=>m[0]===b.pay)[1]})}</div>
      <p class="ig-footer">When you reach the pods, tap Check in to show your code.</p>`; }
   if(S.history.length){ h+=`<h2>Earlier</h2><div class="ig">${S.history.map(x=>row({icon:'check',tone:'ok',title:esc(PKG[x.pkg].name),sub:`${dayShort(x.d)}, ${x.t} · ${x.code}`,end:'<span class="pill ok">Done</span>'})).join('')}</div>`;
    if(!S.fbDone) h+=`<h2>How did it go?</h2><div class="ig">${row({tap:1,icon:'message-square',title:'Rate your nap',sub:'Five quick questions',chev:1,attrs:'data-act="goRate"'})}</div>`; }
@@ -546,7 +556,7 @@ const scanView=(title,sub)=>`<div class="scan"><div class="qr-wrap" id="qrWrap">
   <p class="ig-footer center">Demo: the scan happens on its own after 3 seconds.</p>`;
 SC.checkin={title:'Check in',notabs:1,
  render:()=>scanView('Hold this up to the pod door','Waiting for the scanner…'),
- mount(){ drawQR(); startScan('Scanned. Pod 3 is yours.','Lights are dimming',()=>{ S.stacks.bookings=['list','nap']; render('push'); }); }
+ mount(){ drawQR(); startScan('Scanned. Pod 3 is yours.','Freshly cleaned. Lights are dimming',()=>{ PODS[2]={st:'busy',m:20}; S.stacks.bookings=['list','nap']; render('push'); }); }
 };
 SC.nap={title:'Pod 3',notabs:1,noback:1,
  render:()=>`<div class="ring"><svg viewBox="0 0 280 280" aria-hidden="true">
@@ -559,7 +569,8 @@ SC.nap={title:'Pod 3',notabs:1,noback:1,
 };
 SC.alarm={notabs:1,noback:1,
  render:()=>`<div class="big-ic" style="background:var(--accent-soft);color:var(--accent)">${ic('sun')}</div>
-  <h1 class="center">Time to get up</h1><p class="lede center">Twenty minutes is long enough to feel better and short enough not to feel groggy.</p>`,
+  <h1 class="center">Time to get up</h1><p class="lede center">Twenty minutes is long enough to feel better and short enough not to feel groggy.</p>
+  <div class="ig" style="margin-top:22px">${row({icon:'sparkles',title:'Leave the sheet and pillow cover',sub:'Drop them in the bin by the door. We clean the pod for the next person.'})}</div>`,
  dock:()=>({l:"I'm up",on:()=>S.booking.pkg==='snack'?push('collect'):finishNap()})
 };
 SC.collect={title:'Snack set',notabs:1,noback:1,
@@ -803,7 +814,7 @@ function startNap(keep){
   paint();
   napTimer=setInterval(()=>{ napLeft=Math.max(0,napLeft-(S.fast?60:1)); paint(); if(!napLeft){ clearInterval(napTimer); napTimer=null; chime(); push('alarm'); } },1000);
 }
-function finishNap(){ S.history.unshift(S.booking); S.booking=null; S.stacks.bookings=['list'];
+function finishNap(){ PODS[2]={st:'clean',m:CLEAN}; S.history.unshift(S.booking); S.booking=null; S.stacks.bookings=['list'];
   const msg=S.user?addStamp():'All done. Good luck in class.'; render('fade'); toast(msg,S.user?'stamp':'check'); }
 function chime(){ try{ const c=new (window.AudioContext||window.webkitAudioContext)();
   [0,.3,.6].forEach((t,i)=>{const o=c.createOscillator(),g=c.createGain();o.frequency.value=[660,880,990][i];o.connect(g);g.connect(c.destination);
@@ -819,7 +830,8 @@ function drawQR(){ // decorative, seeded from the code; not a scannable QR
 
 /* ---------- boot ---------- */
 render();
-setInterval(()=>{ let ch=false; PODS.forEach((m,i)=>{ if(m){ PODS[i]=m-1; ch=true; } }); if(ch&&cur()==='home') paintPods(); },60000);
+setInterval(()=>{ PODS.forEach(p=>{ if(p.st==='free') return; p.m--; if(p.m<=0){ if(p.st==='busy'){ p.st='clean'; p.m=CLEAN; } else { p.st='free'; p.m=0; } } });
+  if(cur()==='home') paintPods(); },60000);
 (async()=>{ try{
   const db=window.claude&&window.claude.use?await window.claude.use('db'):null;
   if(!db) return; DB=db;
