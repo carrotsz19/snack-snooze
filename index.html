@@ -662,17 +662,18 @@ SC.root={root:1,
 };
 SC.biz={title:'How it makes money',
  render:()=>`<h2>Where the money comes from</h2><div class="ig">
-  ${row({icon:'bed',title:'Nap sales',sub:`Snooze ${money(PKG.snooze.price)} off-peak, ${money(PKG.snooze.peak)} peak. Snack & Snooze ${money(PKG.snack.price)} / ${money(PKG.snack.peak)}.`,val:'~$2,920'})}
+  ${row({icon:'bed',title:'Nap sales',sub:`Snooze ${money(PKG.snooze.price)} off-peak, ${money(PKG.snooze.peak)} peak. Snack & Snooze ${money(PKG.snack.price)} / ${money(PKG.snack.peak)}.`,val:'~$3,150'})}
   ${row({icon:'ticket',title:'Passes',sub:`From ${money(LOW)} a nap, paid up front. Brings regulars back more often, and about 1 in 7 pass naps is never used.`,val:'~$120 unused'})}
-  ${row({icon:'package-open',title:'Brand samples',sub:'Brands pay about $0.50 for each sample handed out when students collect their snack.',val:'~$230'})}
+  ${row({icon:'package-open',title:'Brand samples (potential)',sub:'Brands pay about $0.50 for each sample handed out when students collect their snack. Needs a brand to sign on.',val:'~$230'})}
   ${row({icon:'school',title:'Wellbeing passes',sub:'The school buys Nap Passes in bulk to give students in exam weeks.',val:'~$950 per exam month'})}
-  ${row({icon:'coffee',title:'Add-ons',sub:`Eye mask ${money(1.5)}, coffee ready when you wake ${money(1.8)}. About 1 in 10 naps.`,val:'~$140'})}
+  ${row({icon:'coffee',title:'Add-ons',sub:`Eye mask ${money(1.5)}, coffee ready when you wake ${money(1.8)}. About 1 in 10 naps.`,val:'~$170'})}
   ${row({icon:'megaphone',title:'Ad space',sub:'Brands pay for the pod door panels and a card in the app.',val:'~$200'})}
-  ${row({icon:'handshake',title:'Sponsored snack',sub:'A brand supplies the granola bar and juice free, for the exposure.',val:'Saves ~$410'})}
+  ${row({icon:'handshake',title:'Snack set',sub:'BizCampus supplies the granola bar and juice at wholesale cost (about $1.00 a set). We will ask brands to sponsor it during launch and exam weeks.',val:'Cost ~$410'})}
   ${row({icon:'recycle',title:'Reusable covers, students tidy up',sub:'Washed covers instead of disposables, and a 2-minute tidy-up instead of a cleaner.',val:'Saves ~$170'})}</div>
-  <h2>Example month, outside exams</h2><div class="ig"><div class="stats three"><div><b>$3,870</b><span>Money in</span></div><div><b>$990</b><span>Costs</span></div><div><b>~$2,880</b><span>Profit</span></div></div></div>
+  <h2>Example month, outside exams</h2><div class="ig"><div class="stats three"><div><b>$3,870</b><span>Money in</span></div><div><b>$1,400</b><span>Costs</span></div><div><b>~$2,470</b><span>Profit</span></div></div></div>
+  <p class="ig-footer">Base case: we pay for the snacks. In a month where a brand sponsors the snack set, profit rises to about $2,880. Exam months add about $950 from school-bought passes.</p>
   <p class="ig-footer">Estimates: 4 pods, about 47 naps a day (42% of slots; passes are assumed to bring 20% more visits, which testing should check), 22 weekdays. Pass naps sell for less, so the average nap brings in about $3.05.</p>
-  <p class="ig-footer"> Costs: pods over 3 years, power and repairs, laundry for reusable covers (about $0.15 each) and wipes. Counter staff already at BizCampus do the cleaning checks, so there's no extra wage. Check every number before it goes on a slide.</p>`
+  <p class="ig-footer"> Costs: pods over 3 years, power and repairs, snack sets at wholesale, laundry for reusable covers (about $0.15 each) and wipes. Counter staff already at BizCampus do the cleaning checks, so there's no extra wage. Check every number before it goes on a slide.</p>`
 };
 SC.form={title:'Rate your nap',notabs:1,
  render(){ const qs=[['easy','How easy was booking?'],['price','Is the price fair?'],['use','Would you use it in a break?'],['better','Better than a coffee for energy?'],['back','Would the stamp card and vouchers bring you back?']];
